@@ -1,0 +1,225 @@
+# Configuration du Moteur de Trading
+# Modifiez ce fichier pour ajuster vos règles sans toucher au code
+
+# Configuration API
+api:
+  provider: alpaca  # Options: alpaca, polygon, iex
+  key: YOUR_API_KEY
+  secret: YOUR_API_SECRET  # Pour Alpaca uniquement
+  
+# Liste des tickers à surveiller
+watchlist:
+  - AAPL
+  - TSLA
+  - AMC
+  - GME
+  - NVDA
+  - AMD
+  - MSFT
+  - META
+  - SPY
+  - QQQ
+
+# Intervalle de scan en secondes
+scan_interval: 5
+
+# Règles de détection
+rules:
+  # RÈGLE 1: Breakout Pre-Market sur Small Cap
+  - name: "Pre-Market Breakout Small Cap"
+    description: "Détection de breakout du plus haut pre-market sur small cap"
+    enabled: true
+    conditions:
+      # Prix dépasse le plus haut pre-market
+      - field: market.price
+        operator: ">"
+        value: 0  # À remplacer dynamiquement par pre_market_high
+      
+      # Volume 2x supérieur à la moyenne 5 minutes
+      - field: indicators.volume_ratio
+        operator: ">"
+        value: 2.0
+      
+      # Float inférieur à 20M
+      - field: info.float_shares
+        operator: "<"
+        value: 20000000
+        
+    action:
+      type: buy
+      stop_loss_pct: 0.02  # Stop loss à -2%
+      target_pct: 0.05     # Target à +5%
+      confidence: 0.75     # Score de confiance
+
+  # RÈGLE 2: Gap & Go
+  - name: "Gap and Go Setup"
+    description: "Gap up avec volume important"
+    enabled: true
+    conditions:
+      # Gap up de plus de 5%
+      - field: indicators.price_change_pct
+        operator: ">"
+        value: 5.0
+      
+      # Volume supérieur à la moyenne 20 périodes
+      - field: indicators.current_volume
+        operator: ">"
+        value: 1000000
+      
+      # Prix au-dessus de SMA 5
+      - field: market.price
+        operator: ">"
+        value: 0  # Remplacé par indicators.sma_5 dynamiquement
+        
+    action:
+      type: buy
+      stop_loss_pct: 0.015
+      target_pct: 0.03
+      confidence: 0.65
+
+  # RÈGLE 3: Short Squeeze Potential
+  - name: "Short Squeeze Alert"
+    description: "Potentiel de short squeeze détecté"
+    enabled: true
+    conditions:
+      # Short interest élevé
+      - field: info.short_interest
+        operator: ">"
+        value: 0.20  # 20% de short interest
+      
+      # Augmentation rapide du prix
+      - field: indicators.price_change_pct
+        operator: ">"
+        value: 3.0
+      
+      # Volume anormalement élevé
+      - field: indicators.volume_ratio
+        operator: ">"
+        value: 3.0
+        
+    action:
+      type: buy
+      stop_loss_pct: 0.025
+      target_pct: 0.10
+      confidence: 0.70
+
+  # RÈGLE 4: Momentum Reversal
+  - name: "Momentum Reversal"
+    description: "Retournement de tendance avec momentum"
+    enabled: true
+    conditions:
+      # Prix sous SMA 20
+      - field: market.price
+        operator: "<"
+        value: 0  # Remplacé par indicators.sma_20
+      
+      # Puis remonte au-dessus de SMA 5
+      - field: market.price
+        operator: ">"
+        value: 0  # Remplacé par indicators.sma_5
+      
+      # Volume en augmentation
+      - field: indicators.volume_ratio
+        operator: ">"
+        value: 1.5
+        
+    action:
+      type: buy
+      stop_loss_pct: 0.02
+      target_pct: 0.04
+      confidence: 0.60
+
+  # RÈGLE 5: High Volume Breakout
+  - name: "Volume Breakout"
+    description: "Breakout avec volume exceptionnel"
+    enabled: true
+    conditions:
+      # Volume 5x la moyenne
+      - field: indicators.volume_ratio
+        operator: ">"
+        value: 5.0
+      
+      # Prix en hausse
+      - field: indicators.price_change_pct
+        operator: ">"
+        value: 1.0
+      
+      # Market cap < 1B (small/mid cap)
+      - field: info.market_cap
+        operator: "<"
+        value: 1000000000
+        
+    action:
+      type: buy
+      stop_loss_pct: 0.03
+      target_pct: 0.08
+      confidence: 0.80
+
+  # RÈGLE 6: After-Hours Momentum
+  - name: "After-Hours Runner"
+    description: "Momentum après la clôture"
+    enabled: false  # Désactivé par défaut
+    conditions:
+      # Heure après 16h00 ET
+      - field: market.timestamp.hour
+        operator: ">="
+        value: 16
+      
+      # Prix en hausse de 2% minimum
+      - field: indicators.price_change_pct
+        operator: ">"
+        value: 2.0
+      
+      # Volume significatif pour after-hours
+      - field: market.volume
+        operator: ">"
+        value: 100000
+        
+    action:
+      type: buy
+      stop_loss_pct: 0.025
+      target_pct: 0.05
+      confidence: 0.55
+
+# Configuration des alertes
+alerts:
+  # Méthodes de notification (à implémenter)
+  email:
+    enabled: false
+    smtp_server: smtp.gmail.com
+    smtp_port: 587
+    from_email: your-email@gmail.com
+    to_email: alert-email@gmail.com
+    
+  webhook:
+    enabled: false
+    url: https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+    
+  sound:
+    enabled: true
+    file: alert.mp3
+
+# Configuration du backtest
+backtest:
+  enabled: false
+  start_date: "2024-01-01"
+  end_date: "2024-12-31"
+  initial_capital: 10000
+  position_size_pct: 0.10  # 10% du capital par position
+  max_positions: 5
+
+# Paramètres de risque
+risk_management:
+  max_daily_loss_pct: 0.02  # Max 2% de perte par jour
+  max_position_size_pct: 0.20  # Max 20% du capital sur une position
+  trailing_stop_enabled: true
+  trailing_stop_pct: 0.015
+
+# Filtres globaux
+filters:
+  min_price: 1.0      # Prix minimum $1
+  max_price: 500.0    # Prix maximum $500
+  min_volume: 100000  # Volume minimum
+  excluded_sectors:   # Secteurs à exclure
+    - "Utilities"
+    - "Real Estate"

@@ -1,0 +1,38 @@
+# Core dependencies
+aiohttp==3.9.1
+pandas==2.0.3
+numpy==1.24.3
+pyyaml==6.0.1
+python-dotenv==1.0.0
+
+# Web server
+flask==3.0.0
+flask-socketio==5.3.5
+flask-cors==4.0.0
+python-socketio==5.10.0
+
+# Database
+sqlalchemy==2.0.23
+
+# Market data
+websocket-client==1.6.4
+requests==2.31.0
+
+# Optional - for specific providers
+alpaca-py==0.13.3  # If using Alpaca
+polygon-api-client==1.12.4  # If using Polygon
+
+# Backtesting
+yfinance==0.2.33
+matplotlib==3.7.2
+seaborn==0.12.2
+plotly==5.18.0
+
+# Technical indicators (optional)
+scipy==1.11.4
+
+# Utilities
+python-dateutil==2.8.2
+pytz==2023.3
+colorama==0.4.6
+tqdm==4.66.1
